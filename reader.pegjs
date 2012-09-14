@@ -1,13 +1,46 @@
+{
+  function Pair(car, cdr) {
+    this.car = car;
+    this.cdr = cdr;
+  }
+
+  var dot = {type: 'dot'};
+  var nil = {type: 'nil'};
+
+  function _toSexp(arr, idx, accu) {
+    if (idx < 0) {
+      return accu;
+    }
+
+    var car = toSexp(arr[idx]);
+    return _toSexp(arr, --idx, new Pair(car, accu));
+  }
+
+  // JS array to Lisp list
+  function toSexp(arr) {
+    if (!Array.isArray(arr)) {
+      return arr;
+    }
+
+    var len = arr.length;
+    if (len > 2 && arr[len - 2] === dot) {
+      return _toSexp(arr, len - 3, toSexp(arr[len - 1]));
+    }
+    return _toSexp(arr, len - 1, nil);
+  }
+}
+
 start
-  = InterTokenSpace tokens:Tokens {
-      return tokens;
+  = InterTokenSpace data:Data {
+      return data;
     }
   / InterTokenSpace { return []; }
 
-Tokens
-  = tokens:(Token InterTokenSpace)+ {
-      return tokens.map(function (t) {
-        return t[0];
+Data
+  = data:(Datum InterTokenSpace)+ {
+      return data.map(function (t) {
+        var d = t[0];
+        return Array.isArray(d) ? toSexp(d) : d;
       });
     }
 
@@ -57,7 +90,7 @@ Letter
   = [a-zA-Z]
 
 SpecialInitial
-  = [!$%&*/:<=>?^_~]
+  = [!$%&*/:<=>?\^_~]
 
 Subsequent
   = Initial
@@ -72,13 +105,12 @@ PeculiaIdentifier
 
 Keyword
   = keyword:(SyntacticKeyword &Delimiter) {
-      return {type: 'keyword', value: keyword[0]};
+      return {type: 'symbol', value: keyword[0]};
     }
 
 SyntacticKeyword
   = ExpressionKeyword
   / 'else'i
-  / '=>'
   / 'define'i
   / 'unquote-splicing'i
   / 'unquote'i
@@ -102,7 +134,7 @@ ExpressionKeyword
 
 Variable
   = !Keyword identifier:Identifier &Delimiter {
-      return { type: 'variable', value: identifier};
+      return { type: 'symbol', value: identifier};
     }
 
 Boolean
@@ -248,3 +280,56 @@ DigitOct
 
 DigitBinary
   = [01]
+
+// FIXME: Quasiquote is not context free
+Datum
+  = QuotePrefix Datum
+  / QuotePrefix Datum
+  / UnquotePrefix Datum
+  / UnquotePrefix Datum
+  / CompoundDatum
+  / SimpleDatum
+
+SimpleDatum
+  = Token
+
+CompoundDatum
+  = List
+  / EmptyList
+
+EmptyList
+  = QuotePrefix '(' InterTokenSpace ')' { return []; }
+
+List
+  = '(' list:ListDatum+ InterTokenSpace ')' {
+      return list;
+    }
+  / '(' head:ListDatum+ InterTokenSpace '.' last:ListDatum InterTokenSpace ')' {
+      head.splice(head.length, 0, dot, last);
+      return head;
+    }
+
+ListDatum
+  = InterTokenSpace datum:Datum {
+      return datum;
+    }
+
+QuotePrefix
+  = Quote
+  / Quasiquote
+
+Quote
+  = "'" { return {type: 'symbol', value: 'quote'}; }
+
+Quasiquote
+  = '`' { return {type: 'symbol', value: 'quasiquote'}; }
+
+UnquotePrefix
+  = UnquoteSplicing
+  / Unquote
+
+UnquoteSplicing
+  = ',@' { return {type: 'symbol', value: 'unquote-splicing'}; }
+
+Unquote
+  = ',' { return {type: 'symbol', value: 'unquote'}; }
