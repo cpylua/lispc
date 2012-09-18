@@ -36,11 +36,15 @@ task 'watch', 'Watch prod source files and build changes', ->
     invoke 'build'
     util.log "Watching for changes in #{prodSrcCoffeeDir}"
 
-    for file in prodCoffeeFiles then do (file) ->
-        fs.watchFile "#{prodSrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
+    watchFile = (file) ->
+        fs.watchFile file, (curr, prev) ->
             if +curr.mtime isnt +prev.mtime
-                util.log "Saw change in #{prodSrcCoffeeDir}/#{file}.coffee"
+                util.log "Saw change in #{file}"
                 invoke 'build'
+                
+    for file in prodCoffeeFiles then do (file) ->
+        watchFile "#{prodSrcCoffeeDir}/#{file}.coffee"
+    watchFile pegjsFile
 
 task 'build', 'Build a single JavaScript file from prod files', ->
     util.log "Building #{prodTargetJsFile}"

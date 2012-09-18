@@ -1,5 +1,6 @@
 {
   function Pair(car, cdr) {
+    this.type = 'pair';
     this.car = car;
     this.cdr = cdr;
   }
