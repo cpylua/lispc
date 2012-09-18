@@ -295,13 +295,9 @@ SimpleDatum
 
 CompoundDatum
   = List
-  / EmptyList
-
-EmptyList
-  = QuotePrefix '(' InterTokenSpace ')' { return []; }
 
 List
-  = '(' list:ListDatum+ InterTokenSpace ')' {
+  = '(' list:ListDatum* InterTokenSpace ')' {
       return list;
     }
   / '(' head:ListDatum+ InterTokenSpace '.' last:ListDatum InterTokenSpace ')' {
