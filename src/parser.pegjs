@@ -1,34 +1,28 @@
 {
-  function Pair(car, cdr) {
-    this.type = 'pair';
-    this.car = car;
-    this.cdr = cdr;
+  var valTrue = {type: 'boolean', value: true},
+      valFalse = {type: 'boolean', value: false};
+
+  function LispCharacter(val) {
+    return {type: 'character', value: val};
+  }
+
+  function LispString(val) {
+    return {type: 'string', value: val};
+  }
+
+  function LispInteger(val) {
+    return {type: 'integer', value: val};
+  }
+
+  function LispFloat(val) {
+    return {type: 'float', value: val};
+  }
+
+  function LispSymbol(val) {
+    return {type: 'symbol', value: val};
   }
 
   var dot = {type: 'dot'};
-  var nil = {type: 'nil'};
-
-  function _toSexp(arr, idx, accu) {
-    if (idx < 0) {
-      return accu;
-    }
-
-    var car = toSexp(arr[idx]);
-    return _toSexp(arr, --idx, new Pair(car, accu));
-  }
-
-  // JS array to Lisp list
-  function toSexp(arr) {
-    if (!Array.isArray(arr)) {
-      return arr;
-    }
-
-    var len = arr.length;
-    if (len > 2 && arr[len - 2] === dot) {
-      return _toSexp(arr, len - 3, toSexp(arr[len - 1]));
-    }
-    return _toSexp(arr, len - 1, nil);
-  }
 }
 
 start
@@ -40,8 +34,7 @@ start
 Data
   = data:(Datum InterTokenSpace)+ {
       return data.map(function (t) {
-        var d = t[0];
-        return Array.isArray(d) ? toSexp(d) : d;
+        return t[0];
       });
     }
 
@@ -106,7 +99,7 @@ PeculiaIdentifier
 
 Keyword
   = keyword:(SyntacticKeyword &Delimiter) {
-      return {type: 'symbol', value: keyword[0]};
+      return new LispSymbol(keyword[0]);
     }
 
 SyntacticKeyword
@@ -135,32 +128,33 @@ ExpressionKeyword
 
 Variable
   = !Keyword identifier:Identifier &Delimiter {
-      return { type: 'symbol', value: identifier};
+      return new LispSymbol(identifier);
     }
 
 Boolean
   = '#t' &Delimiter {
-      return {type: 'boolean', value: true};
+      return valTrue;
     }
   / '#f' &Delimiter {
-      return {type: 'boolean', value: false};
+      return valFalse;
     }
 
 Character
   = '#\\' val: CharacterName &Delimiter {
-      return {type: 'character', value: val};
+      return new LispCharacter(val);
     }
   / '#\\' val:. &Delimiter {
-      return {type: 'character', value: val};
+      return new LispCharacter(val);
     }
 
 CharacterName
   = 'space' { return " "; }
   / "newline" { return "\n"; }
+  / "tab" { return '\t'; }
 
 String
   = '"' val:StringElement* '"' {
-      return {type: 'string', value: val.join("")};
+      return new LispString(val.join(""));
     }
 
 StringElement
@@ -172,10 +166,10 @@ StringElement
 // Only supports floating point numbers and integers
 Number
   = val:Float &Delimiter {
-      return {type: 'float', value: val};
+      return new LispFloat(val);
     }
   / val:Integer &Delimiter {
-      return {type: 'integer', value: val};
+      return new LispInteger(val);
     }
 
 Integer
@@ -316,17 +310,17 @@ QuotePrefix
   / Quasiquote
 
 Quote
-  = "'" { return {type: 'symbol', value: 'quote'}; }
+  = "'" { return new LispSymbol('quote'); }
 
 Quasiquote
-  = '`' { return {type: 'symbol', value: 'quasiquote'}; }
+  = '`' { return new LispSymbol('quasiquote'); }
 
 UnquotePrefix
   = UnquoteSplicing
   / Unquote
 
 UnquoteSplicing
-  = ',@' { return {type: 'symbol', value: 'unquote-splicing'}; }
+  = ',@' { return new LispSymbol('unquote-splicing'); }
 
 Unquote
-  = ',' { return {type: 'symbol', value: 'unquote'}; }
+  = ',' { return new LispSymbol('unquote'); }

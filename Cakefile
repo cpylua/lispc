@@ -18,11 +18,13 @@ prodCoffeeOpts = "--output #{prodTargetJsDir} --compile"
 testCoffeeOpts = "--output #{testTargetJsDir}"
 
 prodCoffeeFiles = [
+    'helper'
+    'reader'
     'compiler'
     'main'
 ]
 
-pegjsFile = 'src/reader.pegjs'
+pegjsFile = 'parser'
 
 task 'watch:all', 'Watch production and test CoffeeScript', ->
     invoke 'watch:test'
@@ -41,7 +43,7 @@ task 'watch', 'Watch prod source files and build changes', ->
             if +curr.mtime isnt +prev.mtime
                 util.log "Saw change in #{file}"
                 invoke 'build'
-                
+
     for file in prodCoffeeFiles then do (file) ->
         watchFile "#{prodSrcCoffeeDir}/#{file}.coffee"
     watchFile pegjsFile
@@ -57,8 +59,8 @@ task 'build', 'Build a single JavaScript file from prod files', ->
             if err then handleError err else read file
 
     # compile parser
-    exec "pegjs --track-line-and-column #{pegjsFile} #{prodTargetJsDir}/reader.js", (err, stdout, stderr) ->
-        if err then handleError err else util.log "  Compiled #{pegjsFile}"
+    exec "pegjs --track-line-and-column src/#{pegjsFile}.pegjs #{prodTargetJsDir}/#{pegjsFile}.js", (err, stdout, stderr) ->
+        if err then handleError err else util.log "  Compiled #{pegjsFile}.pegjs"
 
     read = (file) ->
         fs.readFile "#{prodTargetJsDir}/#{file}.js"

@@ -1,10 +1,13 @@
-util = require 'util'
 path = require 'path'
-reader = require './reader'
+fs = require 'fs'
 
 main = ->
   opts = parseOpts()
-  pmsg "%j", reader.parse "(a . b)"
+  fs.readFile opts.source, 'utf8', (err, content) ->
+    xperror err if err
+    ast = read content
+    js = compile ast
+    fs.writeFile opts.target, js, 'utf8', (err) -> xperror err if err
 
 parseOpts = ->
   args = process.argv
@@ -25,17 +28,5 @@ replaceExt = (file, ext) ->
 usage = ->
   file = path.basename process.argv[1]
   pmsg "Usage: node %s SOURCE [TARGET]", file
-
-pmsg = (fmt, args...) ->
-  val = util.format fmt, args...
-  process.stdout.write val
-
-perror = (fmt, args...) ->
-  val = util.format fmt, args...
-  process.stderr.write val
-
-plog = (fmt, args...) ->
-  val = util.format fmt, args...
-  util.log val
 
 main()
