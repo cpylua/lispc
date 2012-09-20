@@ -74,6 +74,19 @@ class root.LispSymbol extends LispObject
 
   display: -> @write()
 
+  @quote: new LispSymbol 'quote'
+  @quasiquote: new LispSymbol 'quasiquote'
+  @unquote: new LispSymbol 'unquote'
+  @unquote_splicing: new LispSymbol 'unquote-splicing'
+
+  @new: (val) ->
+    switch val
+      when 'quote' then LispSymbol.quote
+      when 'quasiquote' then LispSymbol.quasiquote
+      when 'unquote' then LispSymbol.unquote
+      when 'unquote-splicing' then LispSymbol.unquote_splicing
+      else new LispSymbol val
+
 # number
 class root.LispInteger extends LispObject
   constructor: (@value) -> @type = 'integer'
@@ -116,16 +129,28 @@ class root.LispPair extends LispObject
 
   toWriteString: ->
     rest = @
-    content =
-      while rest.type is 'pair'
-        first = rest.car
-        rest = rest.cdr
-        first.toWriteString()
+    content = []
+    while rest.isPair()
+      for t, abbre of LispPair.tags
+        if isTaggedList rest, t
+          cdr = rest.cdr.car.toWriteString() # cdr.car is guaranteed available
+          content.push "#{abbre}#{cdr}"
+          return content.join ' '
+      first = rest.car
+      rest = rest.cdr
+      content.push first.toWriteString()
     # check for dotted-pair
-    content.splice content.length, 0, '.', rest.toWriteString() if rest.type isnt 'nil'
+    content.splice content.length, 0, '.', rest.toWriteString() unless rest.isNil()
     "(#{content.join ' '})"
 
   display: -> @write()
+
+  @tags: {
+    quote: "'"
+    quasiquote: '`'
+    unquote: ','
+    "unquote-splicing": ',@'
+  }
 
 # reader
 root.read = (prg) ->
@@ -154,6 +179,6 @@ parseASTAtom = (atom) ->
     when 'string' then new LispString val
     when 'integer' then new LispInteger val
     when 'float' then new LispFloat val
-    when 'symbol' then new LispSymbol val
+    when 'symbol' then LispSymbol.new val
 
 isDot = (el) -> el.type is 'dot'

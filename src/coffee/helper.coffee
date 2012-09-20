@@ -17,3 +17,6 @@ root.plog = (fmt, args...) ->
 root.xperror = (fmt, args...) ->
   perror(fmt, args...)
   process.exit()
+
+root.isTaggedList = (el, tag) ->
+  el.isPair() and el.car.isSymbol() and el.car.value is tag

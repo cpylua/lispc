@@ -19,7 +19,7 @@
   }
 
   function LispSymbol(val) {
-    return {type: 'symbol', value: val};
+    return {type: 'symbol', value: val.toLowerCase()};
   }
 
   var dot = {type: 'dot'};
