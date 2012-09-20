@@ -25,6 +25,8 @@ class LispBoolean extends LispObject
 
   toWriteString: -> if @value then '#t' else '#f'
 
+  toJsString: -> if @value then 'true' else 'false'
+
   display: -> @write()
 
 root.LispTrue = new LispBoolean true
@@ -47,6 +49,14 @@ class root.LispCharacter extends LispObject
 
   toWriteString: -> "#\\#{@escape()}"
 
+  toJsString: ->
+    switch @value
+      when '\t' then '"\\t"'
+      when '\n' then '"\\n"'
+      when '"' then '"\\""'
+      when '\\' then '"\\\\"'
+      else "\"#{@value}\""
+
   display: -> pmsg "%s", @value
 
 # string
@@ -60,6 +70,8 @@ class root.LispString extends LispObject
     s = @value.replace '"', '\\"'
     s = s.replace '\\', '\\\\'
     "\"#{s}\""
+
+  toJsString: -> @toWriteString()
 
   display: -> pmsg "%s", @value
 
@@ -96,6 +108,8 @@ class root.LispInteger extends LispObject
 
   toWriteString: -> "#{@value}"
 
+  toJsString: -> @toWriteString()
+
   display: -> @write()
 
 class root.LispFloat extends LispObject
@@ -106,16 +120,20 @@ class root.LispFloat extends LispObject
 
   toWriteString: -> "#{@value}"
 
+  toJsString: -> @toWriteString()
+
   display: -> @write()
 
 # list
 class LispNil extends LispObject
-  constructor: -> @type = 'nil'
+  constructor: -> @type = 'nil'; @value = null
   isNil: -> true
 
   toString: -> '#:LispNil'
 
   toWriteString: -> "()"
+
+  toJsString: -> "null"
 
   display: -> @write()
 
