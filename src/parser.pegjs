@@ -160,6 +160,10 @@ String
 StringElement
   = '\\\\' { return '\\'; }
   / '\\"' { return '"'; }
+  / '\\t' { return '\t'; }
+  / '\\r\\n' { return '\n'; }
+  / '\\r' { return '\n'; }
+  / '\\n' { return '\n'; }
   / [^"\\]
 
 

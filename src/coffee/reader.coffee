@@ -71,8 +71,12 @@ class root.LispString extends LispObject
   toString: -> "#:LispString[#{@value}]"
 
   toWriteString: ->
-    s = @value.replace '"', '\\"'
-    s = s.replace '\\', '\\\\'
+    s = @value.replace '\\', '\\\\'
+    s = s.replace '"', '\\"'
+    s = s.replace '\n', '\\n'
+    s = s.replace '\r\n', '\\n'
+    s = s.replace '\r', '\\n'
+    s = s.replace '\t', '\\t'
     "\"#{s}\""
 
   toJsString: -> @toWriteString()
@@ -88,7 +92,9 @@ class root.LispSymbol extends LispObject
 
   toString: -> "#:LispSymbol[#{@value}]"
 
-  toWriteString: -> "#{@value}"
+  toWriteString: -> @value
+
+  toJsString: -> @value
 
   display: -> @write()
 

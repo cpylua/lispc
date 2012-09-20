@@ -11,13 +11,27 @@ compileForm = (form, indent) ->
     when 'integer' then "LispInteger.create(#{form.toJsString()})"
     when 'float' then "LispFloat.create(#{form.toJsString()})"
     when 'nil' then "LispNil"
-    when 'symbol' then compileSymbol form
+    when 'symbol' then form.toJsString()
     when 'pair' then compileCompound form, indent
 
 compileCompound = (form, indent) ->
   if isTaggedList form, 'if'
-    code = compileIf form, indent
-    "#{code}"
+    compileIf form, indent
+  else if isTaggedList form, 'define'
+    compileDefine form, indent
+
+compileDefine = (form, indent) ->
+  if cdddr(form) is LispNil and cadr(form).isSymbol()
+    compileDefineVariable form, indent
+  else if cadr(form).isPair() and cddr(form) isnt LispNil
+    compileDefineFunction form, indent
+
+compileDefineVariable = (form, indent) ->
+  variable = cadr(form).toJsString()
+  value = compileForm caddr(form), indent
+  """
+var #{variable} = #{value}
+  """
 
 compileIf = (form, indent) ->
   test = compileForm cadr(form), indent + 1

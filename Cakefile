@@ -46,7 +46,7 @@ task 'watch', 'Watch prod source files and build changes', ->
 
     for file in prodCoffeeFiles then do (file) ->
         watchFile "#{prodSrcCoffeeDir}/#{file}.coffee"
-    watchFile pegjsFile
+    watchFile "src/#{pegjsFile}.pegjs"
 
 task 'build', 'Build a single JavaScript file from prod files', ->
     util.log "Building #{prodTargetJsFile}"
