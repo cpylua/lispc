@@ -29,6 +29,8 @@ class LispBoolean extends LispObject
 
   display: -> @write()
 
+  @create: (val) -> if val then LispTrue else LispFalse
+
 root.LispTrue = new LispBoolean true
 root.LispFalse = new LispBoolean false
 
@@ -59,6 +61,8 @@ class root.LispCharacter extends LispObject
 
   display: -> pmsg "%s", @value
 
+  @create: (val) -> new LispCharacter val
+
 # string
 class root.LispString extends LispObject
   constructor: (@value) -> @type = 'string'
@@ -74,6 +78,8 @@ class root.LispString extends LispObject
   toJsString: -> @toWriteString()
 
   display: -> pmsg "%s", @value
+
+  @create: (val) -> new LispString val
 
 # symbol
 class root.LispSymbol extends LispObject
@@ -91,7 +97,7 @@ class root.LispSymbol extends LispObject
   @unquote: new LispSymbol 'unquote'
   @unquote_splicing: new LispSymbol 'unquote-splicing'
 
-  @new: (val) ->
+  @create: (val) ->
     switch val
       when 'quote' then LispSymbol.quote
       when 'quasiquote' then LispSymbol.quasiquote
@@ -112,6 +118,8 @@ class root.LispInteger extends LispObject
 
   display: -> @write()
 
+  @create: (val) -> new LispInteger val
+
 class root.LispFloat extends LispObject
   constructor: (@value) -> @type = 'float'
   isFloat: -> true
@@ -123,6 +131,8 @@ class root.LispFloat extends LispObject
   toJsString: -> @toWriteString()
 
   display: -> @write()
+
+  @create: (val) -> new LispFloat val
 
 # list
 class LispNil extends LispObject
@@ -192,11 +202,11 @@ parseASTRec = (ast, pos, accu) ->
 parseASTAtom = (atom) ->
   val = atom.value
   switch atom.type
-    when 'boolean' then new LispBoolean val
-    when 'character' then new LispCharacter val
-    when 'string' then new LispString val
-    when 'integer' then new LispInteger val
-    when 'float' then new LispFloat val
-    when 'symbol' then LispSymbol.new val
+    when 'boolean' then LispBoolean.create val
+    when 'character' then LispCharacter.create val
+    when 'string' then LispString.create val
+    when 'integer' then LispInteger.create val
+    when 'float' then LispFloat.create val
+    when 'symbol' then LispSymbol.create val
 
 isDot = (el) -> el.type is 'dot'

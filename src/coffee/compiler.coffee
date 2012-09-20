@@ -5,8 +5,12 @@ root.compile = (ast) ->
 
 compileForm = (form, indent) ->
   switch form.type
-    when 'boolean', 'character', 'integer', 'float', 'string', 'nil'
-      "#{form.toJsString()}"
+    when 'boolean' then "LispBoolean.create(#{form.toJsString()})"
+    when 'character' then "LispCharacter.create(#{form.toJsString()})"
+    when 'string' then "LispString.create(#{form.toJsString()})"
+    when 'integer' then "LispInteger.create(#{form.toJsString()})"
+    when 'float' then "LispFloat.create(#{form.toJsString()})"
+    when 'nil' then "LispNil"
     when 'symbol' then compileSymbol form
     when 'pair' then compileCompound form, indent
 
@@ -24,7 +28,7 @@ compileIf = (form, indent) ->
   code = """
 (function() {
   var #{sym} = #{test.lstrip()};
-  if (#{sym} === false) {
+  if (#{sym} === LispFalse) {
     return #{consequent.lstrip()};
   } else {
     return #{alternative.lstrip()};
