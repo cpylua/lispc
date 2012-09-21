@@ -4,13 +4,14 @@ root.compile = (ast) ->
   (compileForm(form, 0) + ";" for form in ast).join '\n\n'
 
 compileForm = (form, indent) ->
+  space = genIndentSpace indent
   switch form.type
-    when 'boolean' then "LispBoolean.create(#{form.toJsString()})"
-    when 'character' then "LispCharacter.create(#{form.toJsString()})"
-    when 'string' then "LispString.create(#{form.toJsString()})"
-    when 'integer' then "LispInteger.create(#{form.toJsString()})"
-    when 'float' then "LispFloat.create(#{form.toJsString()})"
-    when 'nil' then "LispNil"
+    when 'boolean' then "#{space}LispBoolean.create(#{form.toJsString()})"
+    when 'character' then "#{space}LispCharacter.create(#{form.toJsString()})"
+    when 'string' then "#{space}LispString.create(#{form.toJsString()})"
+    when 'integer' then "#{space}LispInteger.create(#{form.toJsString()})"
+    when 'float' then "#{space}LispFloat.create(#{form.toJsString()})"
+    when 'nil' then "#{space}LispNil"
     when 'symbol' then form.toJsString()
     when 'pair' then compileCompound form, indent
 
@@ -19,6 +20,37 @@ compileCompound = (form, indent) ->
     compileIf form, indent
   else if isTaggedList form, 'define'
     compileDefine form, indent
+  else if isTaggedList form, 'begin'
+    compileBegin form, indent
+  else if isTaggedList form, 'lambda'
+    compileLambda form, indent
+
+compileLambda = (form, indent) ->
+  
+
+compileBegin = (form, indent) ->
+  sequences = cdr form
+  codes = []
+  while sequences.isPair()
+    codes.push compileForm car(sequences), indent + 1
+    sequences = cdr sequences
+  idx = codes.length - 1
+  rest = codes[...idx]
+  last = codes[idx]
+  space = genIndentSpace indent
+  if rest.length > 0
+    codes = """
+#{space}(function() {
+#{space}#{rest.join ';\n'};
+#{space}  return #{last.lstrip()};
+#{space}}).call(this)
+    """
+  else
+    codes = """
+#{space}(function() {
+#{space}  return #{last.lstrip()};
+#{space}}).call(this)
+    """
 
 compileDefine = (form, indent) ->
   if cdddr(form) is LispNil and cadr(form).isSymbol()
@@ -29,28 +61,28 @@ compileDefine = (form, indent) ->
 compileDefineVariable = (form, indent) ->
   variable = cadr(form).toJsString()
   value = compileForm caddr(form), indent
+  space = genIndentSpace indent
   """
-var #{variable} = #{value}
+#{space}var #{variable} = #{value.lstrip()}
   """
 
 compileIf = (form, indent) ->
   test = compileForm cadr(form), indent + 1
-  consequent = compileForm caddr(form), indent + 2 
-  alternative = compileForm cadddr(form), indent + 2
+  consequent = compileForm caddr(form), indent + 1
+  alternative = compileForm cadddr(form), indent + 1
 
   sym = genVariable 'iftest'
+  space = genIndentSpace indent
   code = """
-(function() {
-  var #{sym} = #{test.lstrip()};
-  if (#{sym} === LispFalse) {
-    return #{consequent.lstrip()};
-  } else {
-    return #{alternative.lstrip()};
-  }
-}).call(this)
+#{space}(function() {
+#{space}  var #{sym} = #{test.lstrip()};
+#{space}  if (#{sym} === LispFalse) {
+#{space}    return #{consequent.lstrip()};
+#{space}  } else {
+#{space}   return #{alternative.lstrip()};
+#{space}  }
+#{space}}).call(this)
 """
-  pad = genIndentSpace indent
-  (pad + line for line in code.split "\n").join "\n"
 
 genVariable = (prefix, n = 5) ->
   choices = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
