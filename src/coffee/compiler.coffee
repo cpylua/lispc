@@ -79,6 +79,21 @@ compileDefine = (form, indent) ->
   else if cadr(form).isPair() and cddr(form) isnt LispNil
     compileDefineFunction form, indent
 
+compileDefineFunction = (form, indent) ->
+  fn = caadr form
+  formals = cdadr form
+  exprs = cddr form
+  tform = makeDefineVar fn, LispPair.create makeLambda(formals, exprs), LispNil
+  compileForm tform, indent
+
+makeLambda = (formals, exprs) ->
+  lambda = LispSymbol.create 'lambda'
+  LispPair.create lambda, LispPair.create formals, exprs
+
+makeDefineVar = (variable, lambda) ->
+  define = LispSymbol.create 'define'
+  LispPair.create define, LispPair.create variable, lambda
+
 compileDefineVariable = (form, indent) ->
   variable = cadr(form).toJsString()
   value = compileForm caddr(form), indent
@@ -89,8 +104,8 @@ compileDefineVariable = (form, indent) ->
 
 compileIf = (form, indent) ->
   test = compileForm cadr(form), indent + 1
-  consequent = compileForm caddr(form), indent + 1
-  alternative = compileForm cadddr(form), indent + 1
+  consequent = compileForm caddr(form), indent + 2
+  alternative = compileForm cadddr(form), indent + 2
 
   sym = genVariable 'iftest'
   space = genIndentSpace indent

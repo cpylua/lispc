@@ -94,7 +94,7 @@ class root.LispSymbol extends LispObject
 
   toWriteString: -> @value
 
-  toJsString: -> @value
+  toJsString: -> "__#{@value}__"
 
   display: -> @write()
 
