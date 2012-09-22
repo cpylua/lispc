@@ -26,7 +26,28 @@ compileCompound = (form, indent) ->
     compileLambda form, indent
 
 compileLambda = (form, indent) ->
-  
+  params = getParams cadr form
+  expressions = makeBegin cddr form
+  space = genIndentSpace indent
+  """
+#{space}(function() {
+#{space}  return function(#{params}) {
+#{compileBegin expressions, indent + 2};
+#{space}  };
+#{space}}).call(this)
+  """
+
+getParams = (formals) ->
+  params = []
+  rest = formals
+  while rest.isPair()
+    params.push car(rest).toJsString()
+    rest = cdr rest
+  params.join ", "
+
+makeBegin = (exprs) ->
+  tag = LispSymbol.create "begin"
+  LispPair.create tag, exprs
 
 compileBegin = (form, indent) ->
   sequences = cdr form
@@ -41,7 +62,7 @@ compileBegin = (form, indent) ->
   if rest.length > 0
     codes = """
 #{space}(function() {
-#{space}#{rest.join ';\n'};
+#{rest.join ';\n'};
 #{space}  return #{last.lstrip()};
 #{space}}).call(this)
     """
@@ -79,7 +100,7 @@ compileIf = (form, indent) ->
 #{space}  if (#{sym} === LispFalse) {
 #{space}    return #{consequent.lstrip()};
 #{space}  } else {
-#{space}   return #{alternative.lstrip()};
+#{space}    return #{alternative.lstrip()};
 #{space}  }
 #{space}}).call(this)
 """

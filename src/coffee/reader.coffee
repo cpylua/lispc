@@ -179,6 +179,8 @@ class root.LispPair extends LispObject
 
   display: -> @write()
 
+  @create: (car, cdr) -> new LispPair car, cdr
+
   @tags: {
     quote: "'"
     quasiquote: '`'
