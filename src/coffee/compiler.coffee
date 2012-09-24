@@ -24,6 +24,35 @@ compileCompound = (form, indent) ->
     compileBegin form, indent
   else if isTaggedList form, 'lambda'
     compileLambda form, indent
+  else if isTaggedList form, 'let'
+    compileLet form, indent
+  else
+    compileFuncall form, indent
+
+compileFuncall = (form, indent) ->
+  fn = car(form).toJsString()
+  outspace = genIndentSpace indent
+  inspace = genIndentSpace indent + 1
+  sym = genVariable "args"
+  args = compileValues cdr(form), indent + 2
+  """
+#{outspace}(function(){
+#{inspace}#{sym} = [
+#{args.join ",\n"}
+#{inspace}];
+#{inspace}return #{fn}.apply(this, #{sym});
+#{outspace}}).call(this)
+  """
+
+compileValues = (args, indent) ->
+  rest = args
+  values = []
+  while rest.isPair()
+    values.push compileForm car(rest), indent
+    rest = cdr rest
+  values
+
+compileLet = (form, indent) ->
 
 compileLambda = (form, indent) ->
   params = getParams cadr form

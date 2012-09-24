@@ -94,7 +94,11 @@ class root.LispSymbol extends LispObject
 
   toWriteString: -> @value
 
-  toJsString: -> "__#{@value}__"
+  toJsString: ->
+    val = "__#{@value}__"
+    for inv, replc of LispSymbol.mapping
+      val = val.replace inv, replc
+    val
 
   display: -> @write()
 
@@ -110,6 +114,25 @@ class root.LispSymbol extends LispObject
       when 'unquote' then LispSymbol.unquote
       when 'unquote-splicing' then LispSymbol.unquote_splicing
       else new LispSymbol val
+
+  @mapping: {
+    '!': 'exclamation'
+    '%': 'percent'
+    '&': 'ampersand'
+    '*': 'asterisk'
+    '/': 'slash'
+    '+': 'plus'
+    '-': 'minus'
+    ':': 'colon'
+    '<': 'lessthan'
+    '=': 'equal'
+    '>': 'greaterthan'
+    '?': 'question'
+    '^': 'caret'
+    '~': 'tidle'
+    '.': 'dot'
+    '@': 'at'
+  }
 
 # number
 class root.LispInteger extends LispObject
