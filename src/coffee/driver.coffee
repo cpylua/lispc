@@ -1,0 +1,3 @@
+parser = require './parser'
+
+setupLispRuntime()

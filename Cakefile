@@ -24,6 +24,17 @@ prodCoffeeFiles = [
     'main'
 ]
 
+lispRuntimeFiles = [
+    'helper'
+    'reader'
+    'compiler'
+    'runtime'
+    'driver'
+]
+
+lispRuntimeTargetFileName = 'lispdriver'
+lispRuntimeTargetJsFile = "#{prodTargetJsDir}/#{lispRuntimeTargetFileName}.js"
+
 pegjsFile = 'parser'
 
 task 'watch:all', 'Watch production and test CoffeeScript', ->
@@ -43,8 +54,11 @@ task 'watch', 'Watch prod source files and build changes', ->
             if +curr.mtime isnt +prev.mtime
                 util.log "Saw change in #{file}"
                 invoke 'build'
+    files = prodCoffeeFiles[...]
+    for f in lispRuntimeFiles
+        files.push f if files.indexOf(f) is -1
 
-    for file in prodCoffeeFiles then do (file) ->
+    for file in files then do (file) ->
         watchFile "#{prodSrcCoffeeDir}/#{file}.coffee"
     watchFile "src/#{pegjsFile}.pegjs"
 
@@ -54,20 +68,20 @@ task 'build', 'Build a single JavaScript file from prod files', ->
     appContents = []
 
     # compile separate coffee files first
-    for file in prodCoffeeFiles then do (file) ->
+    for file, index in prodCoffeeFiles then do (file, index) ->
         exec "coffee #{prodCoffeeOpts} #{prodSrcCoffeeDir}/#{file}.coffee", (err, stdout, stderr) ->
-            if err then handleError err else read file
+            if err then handleError err else read file, index
 
     # compile parser
     exec "pegjs --track-line-and-column src/#{pegjsFile}.pegjs #{prodTargetJsDir}/#{pegjsFile}.js", (err, stdout, stderr) ->
         if err then handleError err else util.log "  Compiled #{pegjsFile}.pegjs"
 
-    read = (file) ->
+    read = (file, index) ->
         fs.readFile "#{prodTargetJsDir}/#{file}.js"
                   , 'utf8'
                   , (err, fileContents) ->
             handleError(err) if err
-            appContents.push fileContents
+            appContents[index] = fileContents
             util.log "  Compiled #{file}.js"
             process() if --remaining == 0
 
@@ -80,7 +94,42 @@ task 'build', 'Build a single JavaScript file from prod files', ->
             message = "Written #{prodTargetJsFile}"
             util.log message
 
+            remaining = prodCoffeeFiles.length
             for file in prodCoffeeFiles then do (file) ->
+                fs.unlink "#{prodTargetJsDir}/#{file}.js", (err) ->
+                    handleError(err) if err
+                    invoke 'build:runtime' if --remaining is 0
+
+
+task 'build:runtime', 'Build Lisp runtime', ->
+    util.log "Building Lisp runtime driver"
+    remaining = lispRuntimeFiles.length
+    appContents = []
+
+    # compile separate coffee files first
+    for file, index in lispRuntimeFiles then do (file, index) ->
+        exec "coffee #{prodCoffeeOpts} #{prodSrcCoffeeDir}/#{file}.coffee", (err, stdout, stderr) ->
+            if err then handleError err else read file, index
+
+    read = (file, index) ->
+        fs.readFile "#{prodTargetJsDir}/#{file}.js"
+                  , 'utf8'
+                  , (err, fileContents) ->
+            handleError(err) if err
+            appContents[index] = fileContents
+            util.log "  Compiled #{file}.js"
+            process() if --remaining == 0
+
+    process = ->
+        fs.writeFile lispRuntimeTargetJsFile
+                   , appContents.join('\n\n')
+                   , 'utf8'
+                   , (err) ->
+            handleError(err) if err
+            message = "Written #{lispRuntimeTargetJsFile}"
+            util.log message
+
+            for file in lispRuntimeFiles then do (file) ->
                 fs.unlink "#{prodTargetJsDir}/#{file}.js", (err) -> handleError(err) if err
 
 task 'watch:test', 'Watch test specs and build changes', ->

@@ -15,7 +15,7 @@ class LispObject
   write: -> pmsg "%s", @toWriteString()
 
 # boolean
-class LispBoolean extends LispObject
+class root.LispBoolean extends LispObject
   constructor: (@value) -> @type = 'boolean'
   isBoolean: -> true
 

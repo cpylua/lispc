@@ -3,11 +3,16 @@ fs = require 'fs'
 
 main = ->
   opts = parseOpts()
-  fs.readFile opts.source, 'utf8', (err, content) ->
+  fs.readFile 'lispdriver.js', 'utf8', (err, driver) ->
     xperror err if err
-    ast = read content
-    js = compile ast
-    fs.writeFile opts.target, js, 'utf8', (err) -> xperror err if err
+    fs.readFile opts.source, 'utf8', (err, content) ->
+      xperror err if err
+      ast = read content
+      js = [
+        driver
+        compile ast
+      ].join '\n\n// User code\n\n'
+      fs.writeFile opts.target, js, 'utf8', (err) -> xperror err if err
 
 parseOpts = ->
   args = process.argv

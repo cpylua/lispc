@@ -87,10 +87,11 @@ compileLambda = (form, indent) ->
   params = getParams cadr form
   expressions = makeBegin cddr form
   space = genIndentSpace indent
+  block = compileBegin expressions, indent + 2
   """
 #{space}(function() {
 #{space}  return function(#{params}) {
-#{compileBegin expressions, indent + 2};
+#{space}    return #{block.lstrip()};
 #{space}  };
 #{space}}).call(this)
   """
@@ -170,7 +171,7 @@ compileIf = (form, indent) ->
   code = """
 #{space}(function() {
 #{space}  var #{sym} = #{test.lstrip()};
-#{space}  if (#{sym} === LispFalse) {
+#{space}  if (#{sym} !== LispFalse) {
 #{space}    return #{consequent.lstrip()};
 #{space}  } else {
 #{space}    return #{alternative.lstrip()};
