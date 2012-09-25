@@ -40,7 +40,7 @@ compileFuncall = (form, indent) ->
 #{inspace}#{sym} = [
 #{args.join ",\n"}
 #{inspace}];
-#{inspace}return #{fn.lstrip()}.apply(this, #{sym});
+#{inspace}return #{fn.lstrip()}.value.apply(this, #{sym});
 #{outspace}}).call(this)
   """
 
@@ -88,11 +88,13 @@ compileLambda = (form, indent) ->
   expressions = makeBegin cddr form
   space = genIndentSpace indent
   block = compileBegin expressions, indent + 2
+  sym = genVariable 'lambda'
   """
 #{space}(function() {
-#{space}  return function(#{params}) {
+#{space}  var #{sym} = function(#{params}) {
 #{space}    return #{block.lstrip()};
 #{space}  };
+#{space}  return LispLambda.create(#{sym});
 #{space}}).call(this)
   """
 

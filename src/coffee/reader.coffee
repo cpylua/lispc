@@ -12,6 +12,7 @@ class LispObject
   isNumber: -> @isInteger() or @isFloat()
   isPair: -> false
   isNil: -> false
+  isLambda: -> false
   write: -> pmsg "%s", @toWriteString()
 
 # boolean
@@ -210,6 +211,25 @@ class root.LispPair extends LispObject
     unquote: ','
     "unquote-splicing": ',@'
   }
+
+# not used in reader, but it is necessary when compiling
+class root.LispLambda extends LispObject
+  constructor: (@value) ->
+    @type = 'lambda'
+    @identity = LispLambda.id++
+
+  isLambda: -> true
+
+  toString: -> "#:LispLambda\n#{@value.toString()}"
+
+  toWriteString: -> "#<lambda #{@identity}>"
+
+  display: -> @toWriteString()
+
+  @create: (fn) -> new LispLambda fn
+
+  @id: 1
+
 
 # reader
 root.read = (prg) ->
