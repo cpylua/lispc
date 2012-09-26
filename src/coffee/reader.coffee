@@ -126,23 +126,23 @@ class root.LispSymbol extends LispObject
       else new LispSymbol val
 
   @mapping: {
-    '\\!': '$exclamation$'
-    '\\%': '$percent$'
-    '\\&': '$ampersand$'
-    '\\*': '$asterisk$'
-    '\\/': '$slash$'
-    '\\+': '$plus$'
-    '\\-': '$minus$'
-    '\\:': '$colon$'
-    '\\<': '$lessthan$'
-    '\\=': '$equal$'
-    '\\>': '$greaterthan$'
-    '\\?': '$question$'
-    '\\^': '$caret$'
-    '\\~': '$tidle$'
-    '\\.': '$dot$'
-    '\\@': '$at$'
     '\\$': "$$$$"
+    '\\!': '$$$$exclamation$$$$'
+    '\\%': '$$$$percent$$$$'
+    '\\&': '$$$$ampersand$$$$'
+    '\\*': '$$$$asterisk$$$$'
+    '\\/': '$$$$slash$$$$'
+    '\\+': '$$$$plus$$$$'
+    '\\-': '$$$$minus$$$$'
+    '\\:': '$$$$colon$$$$'
+    '\\<': '$$$$lessthan$$$$'
+    '\\=': '$$$$equal$$$$'
+    '\\>': '$$$$greaterthan$$$$'
+    '\\?': '$$$$question$$$$'
+    '\\^': '$$$$caret$$$$'
+    '\\~': '$$$$tidle$$$$'
+    '\\.': '$$$$dot$$$$'
+    '\\@': '$$$$at$$$$'
   }
 
 # number
