@@ -14,6 +14,7 @@ class LispObject
   isNil: -> false
   isLambda: -> false
   write: -> pmsg "%s", @toWriteString()
+  toCompileQuoteString: -> @toWriteString()
 
 # boolean
 class root.LispBoolean extends LispObject
@@ -60,6 +61,8 @@ class root.LispCharacter extends LispObject
       when '\\' then '"\\\\"'
       else "\"#{@value}\""
 
+  toCompileQuoteString: -> "#\\\\#{@escape()}"
+
   display: -> pmsg "%s", @value
 
   @create: (val) -> new LispCharacter val
@@ -72,13 +75,18 @@ class root.LispString extends LispObject
   toString: -> "#:LispString[#{@value}]"
 
   toWriteString: ->
-    s = @value.replace '\\', '\\\\'
-    s = s.replace '"', '\\"'
-    s = s.replace '\n', '\\n'
-    s = s.replace '\r\n', '\\n'
-    s = s.replace '\r', '\\n'
-    s = s.replace '\t', '\\t'
+    s = @value.replace /\\/g, '\\\\'
+    s = s.replace /\"/g, '\\"'
+    s = s.replace /\r\n/, '\\n'
+    s = s.replace /\n/g, '\\n'
+    s = s.replace /\r/g, '\\n'
+    s = s.replace /\t/g, '\\t'
     "\"#{s}\""
+
+  toCompileQuoteString: ->
+    s = @toWriteString()
+    s = s.replace /\\/g, "\\\\"
+    s.replace /\"/g, "\\\""
 
   toJsString: -> @toWriteString()
 
@@ -98,7 +106,8 @@ class root.LispSymbol extends LispObject
   toJsString: ->
     val = "__#{@value}__"
     for inv, replc of LispSymbol.mapping
-      val = val.replace inv, replc
+      pattern = new RegExp inv, 'g'
+      val = val.replace pattern, replc
     val
 
   display: -> @write()
@@ -117,22 +126,23 @@ class root.LispSymbol extends LispObject
       else new LispSymbol val
 
   @mapping: {
-    '!': 'exclamation'
-    '%': 'percent'
-    '&': 'ampersand'
-    '*': 'asterisk'
-    '/': 'slash'
-    '+': 'plus'
-    '-': 'minus'
-    ':': 'colon'
-    '<': 'lessthan'
-    '=': 'equal'
-    '>': 'greaterthan'
-    '?': 'question'
-    '^': 'caret'
-    '~': 'tidle'
-    '.': 'dot'
-    '@': 'at'
+    '\\!': '$exclamation$'
+    '\\%': '$percent$'
+    '\\&': '$ampersand$'
+    '\\*': '$asterisk$'
+    '\\/': '$slash$'
+    '\\+': '$plus$'
+    '\\-': '$minus$'
+    '\\:': '$colon$'
+    '\\<': '$lessthan$'
+    '\\=': '$equal$'
+    '\\>': '$greaterthan$'
+    '\\?': '$question$'
+    '\\^': '$caret$'
+    '\\~': '$tidle$'
+    '\\.': '$dot$'
+    '\\@': '$at$'
+    '\\$': "$$$$"
   }
 
 # number
@@ -185,21 +195,25 @@ class root.LispPair extends LispObject
 
   toString: -> "#:LispPair[CAR:#{@car}, CDR:#{@cdr}]"
 
-  toWriteString: ->
+  toOutputString: (selector) ->
     rest = @
     content = []
     while rest.isPair()
       for t, abbre of LispPair.tags
         if isTaggedList rest, t
-          cdr = rest.cdr.car.toWriteString() # cdr.car is guaranteed available
+          cdr = rest.cdr.car[selector]() # cdr.car is guaranteed available
           content.push "#{abbre}#{cdr}"
           return content.join ' '
       first = rest.car
       rest = rest.cdr
-      content.push first.toWriteString()
+      content.push first[selector]()
     # check for dotted-pair
-    content.splice content.length, 0, '.', rest.toWriteString() unless rest.isNil()
+    content.splice content.length, 0, '.', rest[selector]() unless rest.isNil()
     "(#{content.join ' '})"
+
+  toWriteString: -> @toOutputString 'toWriteString'
+
+  toCompileQuoteString: -> @toOutputString 'toCompileQuoteString'
 
   display: -> @write()
 
@@ -224,7 +238,7 @@ class root.LispLambda extends LispObject
 
   toWriteString: -> "#<lambda #{@identity}>"
 
-  display: -> @toWriteString()
+  display: -> @write()
 
   @create: (fn) -> new LispLambda fn
 

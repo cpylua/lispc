@@ -26,8 +26,19 @@ compileCompound = (form, indent) ->
     compileLambda form, indent
   else if isTaggedList form, 'let'
     compileLet form, indent
+  else if isTaggedList form, 'quote'
+    compileQuote form, indent
   else
     compileFuncall form, indent
+
+compileQuote = (form, indent) ->
+  space = genIndentSpace indent
+  list = cadr(form).toCompileQuoteString()
+  """
+#{space}(function() {
+#{space}  return read("#{list}")[0];
+#{space}}).call(this)
+  """
 
 compileFuncall = (form, indent) ->
   fn = compileForm car(form), indent + 1
